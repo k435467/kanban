@@ -14,3 +14,5 @@ export interface AuthState {
   readonly user: UserInfo | null;
   readonly loading: boolean;
 }
+
+export type ThemeMode = "light" | "dark";
