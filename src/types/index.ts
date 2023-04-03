@@ -16,3 +16,18 @@ export interface AuthState {
 }
 
 export type ThemeMode = "light" | "dark";
+
+export interface Project {
+  id?: string;
+  title: string;
+}
+
+export interface Task {
+  id?: string;
+  title: string;
+  description?: string;
+  label: string;
+  status: string;
+  priority?: number;
+  due?: string;
+}

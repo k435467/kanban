@@ -14,12 +14,12 @@ const useRedirect = () => {
 
   useEffect(() => {
     if (!loading && user) {
-      router.push("/workspace");
+      router.push("/projects");
     }
   }, [loading, user]);
 
   useEffect(() => {
-    router.prefetch("/workspace");
+    router.prefetch("/projects");
   }, []);
 };
 

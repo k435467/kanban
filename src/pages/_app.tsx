@@ -1,4 +1,5 @@
-import '@/styles/globals.css'
+import "@/styles/globals.css";
+import "@/styles/tailwindPreflight.css";
 import type { AppProps } from "next/app";
 import { AuthUserProvider } from "@/components/AuthUserProvider";
 import store from "@/redux/store";
