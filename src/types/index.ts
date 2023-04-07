@@ -30,4 +30,5 @@ export interface Task {
   status: string;
   priority?: number;
   due?: string;
+  phase?: number;
 }

@@ -2,11 +2,13 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import themeReducer from "./themeSlice";
 import projectsReducer from "./projectsSlice";
+import tasksReducer from "./tasksSlice";
 
 const store = configureStore({
   reducer: {
     theme: themeReducer,
     projects: projectsReducer,
+    tasks: tasksReducer,
   },
 });
 

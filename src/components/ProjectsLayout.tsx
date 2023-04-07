@@ -8,7 +8,7 @@ import { Layout, Menu, MenuProps, Spin } from "antd";
 import { useProjects } from "@/utils/index";
 import { useRouter } from "next/router";
 
-export const ProjectsLayout: React.FC<{ children: React.ReactNode }> = ({
+export const ProjectsLayout: React.FC<{ children?: React.ReactNode }> = ({
   children,
 }) => {
   const dispatch = useAppDispatch();
@@ -30,14 +30,6 @@ export const ProjectsLayout: React.FC<{ children: React.ReactNode }> = ({
       icon: themeMode === "light" ? <TbSun /> : <TbMoonStars />,
       onClick: () => dispatch(switchTheme()),
     },
-    {
-      label: "Home",
-      key: "home",
-      icon: <AiOutlineHome />,
-      onClick: () => {
-        router.push("/projects");
-      },
-    },
   ];
 
   const projectItemsChildren = useMemo(
@@ -54,12 +46,22 @@ export const ProjectsLayout: React.FC<{ children: React.ReactNode }> = ({
 
   const projectItems: MenuProps["items"] = [
     {
+      label: "Home",
+      key: "home",
+      icon: <AiOutlineHome />,
+      onClick: () => {
+        router.push("/projects");
+      },
+    },
+    {
       type: "group",
       label: "Projects",
       key: "projects",
       children: projectItemsChildren,
     },
   ];
+
+  if (!router.asPath.startsWith("/projects")) return <>{children}</>;
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -68,7 +70,12 @@ export const ProjectsLayout: React.FC<{ children: React.ReactNode }> = ({
         {loading ? (
           <Spin />
         ) : (
-          <Menu className="" mode="inline" items={projectItems} />
+          <Menu
+            selectable={false}
+            className=""
+            mode="inline"
+            items={projectItems}
+          />
         )}
       </Layout.Sider>
       <Layout>{children}</Layout>

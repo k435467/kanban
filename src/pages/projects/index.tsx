@@ -17,7 +17,7 @@ import { fetchProjects } from "@/redux/projectsSlice";
 
 const { Title, Text } = Typography;
 
-export default function Myspace() {
+export default function Projects() {
   const dispatch = useAppDispatch();
   const { token } = theme.useToken();
   const [form] = Form.useForm();
@@ -39,7 +39,7 @@ export default function Myspace() {
   };
 
   return (
-    <ProjectsLayout>
+    <>
       {contextHolder}
       <Layout.Header
         className="flex items-center"
@@ -71,6 +71,6 @@ export default function Myspace() {
       <Layout.Footer
         style={{ backgroundColor: token.colorBgBase }}
       ></Layout.Footer>
-    </ProjectsLayout>
+    </>
   );
 }

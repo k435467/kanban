@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/utils/auth";
 import { useAppDispatch, useAppSelector } from "@/redux/store";
 import { fetchProjects, selectProjects } from "@/redux/projectsSlice";
-import { Task } from "@/types";
-import { getProjectTasks } from "./firestore";
+import {
+  fetchTasks,
+  selectTasksBucketSize,
+  selectTasksLoading,
+  tasksSelectors,
+} from "@/redux/tasksSlice";
 
 export const useProjects = () => {
   const dispatch = useAppDispatch();
@@ -11,32 +15,22 @@ export const useProjects = () => {
   const { projects, loading } = useAppSelector(selectProjects);
 
   useEffect(() => {
-    if (user?.uid && projects.length === 0) dispatch(fetchProjects(user.uid));
+    if (user?.uid) dispatch(fetchProjects(user.uid));
   }, [user]);
 
   return { projects, loading };
 };
 
 export const useTasks = (projectId: string) => {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const tasksIds = useAppSelector(tasksSelectors.selectIds);
+  const loading = useAppSelector(selectTasksLoading);
+  const bucketSize = useAppSelector(selectTasksBucketSize);
 
   useEffect(() => {
-    if (user?.uid && projectId) {
-      setLoading(true);
-      getProjectTasks(user.uid, projectId)
-        .then((v) => {
-          setTasks(v);
-        })
-        .catch((e) => {
-          console.error(e);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    }
-  }, [projectId]);
+    if (user?.uid) dispatch(fetchTasks({ userId: user.uid, projectId }));
+  }, [user, projectId]);
 
-  return { tasks, loading };
+  return { tasksIds, loading, bucketSize };
 };

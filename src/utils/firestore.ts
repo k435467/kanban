@@ -3,14 +3,11 @@ import {
   addDoc,
   doc,
   getDocs,
-  // query,
-  // where,
-  // deleteDoc,
-  // getDoc,
-  // updateDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase/index";
 import { Project, Task } from "@/types";
+import { EntityId } from "@reduxjs/toolkit";
 
 export const getProjects = (userId: string) =>
   new Promise<Project[]>(async (resolve, reject) => {
@@ -47,6 +44,28 @@ export const addProject = (userId: string, title: string) =>
     }
   });
 
+export const updateTask = (
+  userId: string,
+  projectId: string,
+  taskId: EntityId,
+  changes: Partial<Task>
+) =>
+  new Promise<void>((resolve, reject) => {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      const taskRef = doc(
+        userDocRef,
+        "projects",
+        projectId,
+        "tasks",
+        taskId.toString()
+      );
+      return updateDoc(taskRef, changes);
+    } catch (e) {
+      return reject(new Error("Error updating task: " + e));
+    }
+  });
+
 export const getProjectTasks = (userId: string, projectId: string) =>
   new Promise<Task[]>(async (resolve, reject) => {
     try {
@@ -60,7 +79,11 @@ export const getProjectTasks = (userId: string, projectId: string) =>
       const querySnapshot = await getDocs(prjTasksCollRef);
       let tasks: Task[] = [];
       querySnapshot.forEach((doc) => {
-        tasks.push(doc.data() as Task);
+        const task: Task = {
+          ...(doc.data() as Task),
+          id: doc.id,
+        };
+        tasks.push(task);
       });
       return resolve(tasks);
     } catch (e) {
