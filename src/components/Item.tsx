@@ -31,7 +31,9 @@ export const Item = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="w-full rounded p-4 shadow"
+      className={`w-full rounded p-4 shadow ${
+        task.status === "closed" && "opacity-40"
+      }`}
       {...props}
       style={{ backgroundColor: token.colorBgBase, ...props.style }}
       onClick={onClick}

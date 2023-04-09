@@ -8,6 +8,8 @@ import {
 } from "@reduxjs/toolkit";
 import { RootState } from "./store";
 import { getProjectTasks } from "@/utils/firestore";
+import dayjs from "dayjs";
+import { cmpTaskStatus } from "@/utils";
 
 const fetchTasks = createAsyncThunk(
   "tasks/fetchTasks",
@@ -24,10 +26,13 @@ const taskCmpFn = (a: Task, b: Task) => {
   else if (a.phase! > b.phase!) return 1;
   else {
     // same phase
-    if (a.priority && b.priority) return b.priority - a.priority;
-    else if (a.priority) return -1;
-    else if (b.priority) return 1;
-    else return 0;
+    if (cmpTaskStatus(a, b) !== 0) return cmpTaskStatus(a, b);
+    if ((a.priority ?? 0) < (b.priority ?? 0)) return 1;
+    else if ((a.priority ?? 0) > (b.priority ?? 0)) return -1;
+    else {
+      // same priority
+      return dayjs(a.createDate).isBefore(dayjs(b.createDate)) ? 0 : 1;
+    }
   }
 };
 
@@ -69,7 +74,6 @@ export const tasksSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchTasks.fulfilled, (state, action) => {
-        // tasks.sort(taskCmpFn);
         const bucketSize: number[] = [0, 0, 0, 0, 0, 0];
         action.payload.forEach((task) => {
           ++bucketSize[task.phase!];

@@ -8,6 +8,15 @@ import {
   selectTasksLoading,
   tasksSelectors,
 } from "@/redux/tasksSlice";
+import { Task, TaskStatus } from "@/types";
+
+const taskStatusIdx: { [x in TaskStatus]: number } = {
+  closed: 0,
+  open: 1,
+};
+export const cmpTaskStatus = (a: Task, b: Task) => {
+  return taskStatusIdx[b.status] - taskStatusIdx[a.status];
+};
 
 export const useProjectTitle = (projectId: string) => {
   const { projects } = useAppSelector(selectProjects);

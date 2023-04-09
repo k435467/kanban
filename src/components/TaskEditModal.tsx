@@ -101,7 +101,7 @@ export const TaskEditModal: React.FC<{
         footer={
           <div className="flex justify-between">
             <Popconfirm title="Delete the task" onConfirm={handelDel}>
-              <Button danger type="primary" loading={delLoading}>
+              <Button danger loading={delLoading}>
                 Delete
               </Button>
             </Popconfirm>

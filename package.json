@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@react-spring/web": "^9.7.1",
     "@reduxjs/toolkit": "^1.9.3",
     "@types/node": "18.15.10",
     "@types/react": "18.0.30",

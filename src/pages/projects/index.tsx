@@ -27,7 +27,7 @@ export default function Projects() {
 
   useEffect(() => {
     if (router.query.del) {
-      messageApi.success("The task deleted!");
+      messageApi.success("The project deleted!");
       router.push("/projects");
     }
   }, [router.query]);
@@ -69,7 +69,10 @@ export default function Projects() {
           onFinish={handleCreateProject}
         >
           <Space.Compact>
-            <Form.Item name="title" rules={[{ required: true }]}>
+            <Form.Item
+              name="title"
+              rules={[{ required: true, min: 1, max: 100 }]}
+            >
               <Input placeholder="Project Title" />
             </Form.Item>
             <Button htmlType="submit">Create Project</Button>

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import dayjs from "dayjs";
-import { Task } from "@/types";
+import { Task, TaskStatus } from "@/types";
 import { Form, Input, Select, Rate, DatePicker, FormInstance } from "antd";
 import { EntityId } from "@reduxjs/toolkit";
 
@@ -9,7 +9,7 @@ const taskLabels = [
   { value: "feature", label: "Feature" },
   { value: "enhancement", label: "Enhancement" },
 ];
-const taskStatus = [
+const taskStatus: { value: TaskStatus; label: string }[] = [
   { value: "open", label: "Open" },
   { value: "closed", label: "Closed" },
 ];
@@ -44,11 +44,11 @@ export const TaskForm: React.FC<{
       <Form.Item
         label="Title"
         name="title"
-        rules={[{ min: 1, required: true }]}
+        rules={[{ min: 1, required: true, max: 100 }]}
       >
         <Input />
       </Form.Item>
-      <Form.Item label="Description" name="description">
+      <Form.Item label="Description" name="description" rules={[{ max: 1000 }]}>
         <Input.TextArea />
       </Form.Item>
       <Form.Item label="Label" name="label" required>

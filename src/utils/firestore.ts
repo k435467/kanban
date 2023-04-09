@@ -45,6 +45,22 @@ export const addProject = (userId: string, title: string) =>
     }
   });
 
+export const updateProjectTitle = (
+  userId: string,
+  projectId: string,
+  title: string
+) =>
+  new Promise<void>(async (resolve, reject) => {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      const projectDocRef = doc(userDocRef, "projects", projectId);
+      await updateDoc(projectDocRef, { title });
+      return resolve();
+    } catch (e) {
+      return reject(new Error("Error updating project title: " + e));
+    }
+  });
+
 export const delProject = (userId: string, projectId: string) =>
   new Promise<void>(async (resolve, reject) => {
     try {

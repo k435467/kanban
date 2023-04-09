@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { signOut } from "@/firebase/google";
 import { TbMoonStars, TbSun } from "react-icons/tb";
 import { useAppDispatch, useAppSelector } from "@/redux/store";
@@ -6,7 +6,23 @@ import { selectThemeMode, switchTheme } from "@/redux/themeSlice";
 import { AiOutlineLogout, AiOutlineHome } from "react-icons/ai";
 import { Layout, Menu, MenuProps, Spin } from "antd";
 import { useProjects } from "@/utils/index";
-import { useRouter } from "next/router";
+import { NextRouter, useRouter } from "next/router";
+
+const useCurMenu = (router: NextRouter) => {
+  const [curMenu, setCurMenu] = useState<string>("");
+  const { projectId } = router.query;
+
+  useEffect(() => {
+    if (router.asPath === "/projects") {
+      setCurMenu("home");
+    }
+    if (projectId) {
+      setCurMenu(projectId as string);
+    }
+  }, [projectId, router.asPath]);
+
+  return curMenu;
+};
 
 export const ProjectsLayout: React.FC<{ children?: React.ReactNode }> = ({
   children,
@@ -14,8 +30,8 @@ export const ProjectsLayout: React.FC<{ children?: React.ReactNode }> = ({
   const dispatch = useAppDispatch();
   const { themeMode } = useAppSelector(selectThemeMode);
   const router = useRouter();
-
   const { projects, loading } = useProjects();
+  const curMenu = useCurMenu(router);
 
   const settingItems: MenuProps["items"] = [
     {
@@ -73,6 +89,7 @@ export const ProjectsLayout: React.FC<{ children?: React.ReactNode }> = ({
           </div>
         ) : (
           <Menu
+            selectedKeys={[curMenu]}
             selectable={false}
             className=""
             mode="inline"

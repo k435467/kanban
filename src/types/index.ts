@@ -23,13 +23,14 @@ export interface Project {
 }
 
 export type TaskLabel = "bug" | "feature" | "enhancement";
+export type TaskStatus = "open" | "closed";
 
 export interface Task {
   id?: string;
   title: string;
   description?: string;
   label: TaskLabel;
-  status: string;
+  status: TaskStatus;
   priority?: number;
   due?: string;
   phase?: number;

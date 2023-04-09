@@ -2,10 +2,19 @@ import React, { useMemo, useState } from "react";
 import { ItemCollection } from "@/components/ItemCollection";
 import { useAppDispatch } from "@/redux/store";
 import { Item } from "@/components/Item";
-import { theme, Layout, Typography, message, Button } from "antd";
+import {
+  theme,
+  Layout,
+  Typography,
+  message,
+  Button,
+  Space,
+  Popconfirm,
+  Spin,
+} from "antd";
 import { useRouter } from "next/router";
 import { useTasks, useProjectTitle } from "@/utils/index";
-import { delProject, getProjects, updateTask } from "@/utils/firestore";
+import { delProject, updateTask } from "@/utils/firestore";
 import { useAuth } from "@/utils/auth";
 import { taskMovePhase } from "@/redux/tasksSlice";
 import {
@@ -18,6 +27,7 @@ import { NewTaskButton } from "@/components/NewTaskButton";
 import { EntityId } from "@reduxjs/toolkit";
 import { TaskEditModal } from "@/components/TaskEditModal";
 import { fetchProjects } from "@/redux/projectsSlice";
+import { EditProjectButton } from "@/components/EditProjectButton";
 
 const { Title } = Typography;
 
@@ -36,7 +46,7 @@ export default function Project() {
   const projectTitle = useProjectTitle(projectId as string);
   const { token } = theme.useToken();
   const dispatch = useAppDispatch();
-  const { tasksIds, bucketSize } = useTasks(projectId as string);
+  const { tasksIds, loading, bucketSize } = useTasks(projectId as string);
   const [messageApi, contextHolder] = message.useMessage();
   const [selectTaskId, setSelectTaskId] = useState<EntityId | null>(null);
   const [delLoading, setDelLoading] = useState<boolean>(false);
@@ -97,10 +107,18 @@ export default function Project() {
         style={{ backgroundColor: token.colorBgBase }}
       >
         <div className="flex w-full items-center justify-between">
-          <Title level={3}>{projectTitle}</Title>
-          <Button danger loading={delLoading} onClick={handleDel}>
-            Delete Project
-          </Button>
+          <div className="flex items-center">
+            <Title level={3}>{projectTitle}</Title>
+            {loading && <Spin className="ml-4" />}
+          </div>
+          <Space>
+            <EditProjectButton projectTitle={projectTitle} />
+            <Popconfirm title="Delete the task" onConfirm={handleDel}>
+              <Button danger loading={delLoading}>
+                Delete Project
+              </Button>
+            </Popconfirm>
+          </Space>
         </div>
       </Layout.Header>
       <Layout.Content
@@ -108,6 +126,7 @@ export default function Project() {
         style={{ backgroundColor: token.colorBgBase }}
       >
         {contextHolder}
+
         <DragDropContext onDragEnd={handleDragEnd}>
           {collectionTitles.map((title, idx) => (
             <Droppable droppableId={idx.toString()} key={`droppable-${title}`}>
