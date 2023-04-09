@@ -4,6 +4,7 @@ import {
   doc,
   getDocs,
   updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase/index";
 import { Project, Task } from "@/types";
@@ -44,13 +45,38 @@ export const addProject = (userId: string, title: string) =>
     }
   });
 
+export const delProject = (userId: string, projectId: string) =>
+  new Promise<void>(async (resolve, reject) => {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      const taskCollRef = collection(
+        userDocRef,
+        "projects",
+        projectId,
+        "tasks"
+      );
+      const querySnapshot = await getDocs(taskCollRef);
+      let delTasks: Promise<void>[] = [];
+      querySnapshot.forEach((doc) => {
+        delTasks.push(deleteDoc(doc.ref));
+      });
+      Promise.all(delTasks).then(async () => {
+        const projectDocRef = doc(userDocRef, "projects", projectId);
+        await deleteDoc(projectDocRef);
+        return resolve();
+      });
+    } catch (e) {
+      return reject(new Error("Error deleting project: " + e));
+    }
+  });
+
 export const updateTask = (
   userId: string,
   projectId: string,
   taskId: EntityId,
   changes: Partial<Task>
 ) =>
-  new Promise<void>((resolve, reject) => {
+  new Promise<void>(async (resolve, reject) => {
     try {
       const userDocRef = doc(db, "users", userId);
       const taskRef = doc(
@@ -60,7 +86,8 @@ export const updateTask = (
         "tasks",
         taskId.toString()
       );
-      return updateDoc(taskRef, changes);
+      await updateDoc(taskRef, changes);
+      return resolve();
     } catch (e) {
       return reject(new Error("Error updating task: " + e));
     }
@@ -101,7 +128,16 @@ export const addTask = (userId: string, projectId: string, task: Task) =>
         projectId,
         "tasks"
       );
-      const taskRef = await addDoc(prjTasksCollRef, task);
+      const safeTask: Task = {
+        title: task.title,
+        description: task.description ?? "",
+        label: task.label,
+        status: task.status,
+        priority: task.priority ?? 0,
+        ...(task.due && { due: task.due }),
+        phase: task.phase ?? 0,
+      };
+      const taskRef = await addDoc(prjTasksCollRef, safeTask);
       if (taskRef.id) {
         return resolve(taskRef.id);
       } else {
@@ -109,5 +145,23 @@ export const addTask = (userId: string, projectId: string, task: Task) =>
       }
     } catch (e) {
       return reject(new Error("Error adding task: " + e));
+    }
+  });
+
+export const delTask = (userId: string, projectId: string, taskId: EntityId) =>
+  new Promise<void>(async (resolve, reject) => {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      const taskDocRef = doc(
+        userDocRef,
+        "projects",
+        projectId,
+        "tasks",
+        taskId.toString()
+      );
+      await deleteDoc(taskDocRef);
+      return resolve();
+    } catch (e) {
+      return reject(new Error("Error deleting task: " + e));
     }
   });

@@ -2,28 +2,22 @@ import React, { useMemo, useState } from "react";
 import { ItemCollection } from "@/components/ItemCollection";
 import { useAppDispatch } from "@/redux/store";
 import { Item } from "@/components/Item";
-import { AiOutlinePlus } from "react-icons/ai";
-import dayjs from "dayjs";
-import { Task } from "@/types";
-import {
-  theme,
-  Layout,
-  Typography,
-  FloatButton,
-  Modal,
-  Form,
-  Input,
-  Select,
-  Rate,
-  DatePicker,
-  message,
-} from "antd";
+import { theme, Layout, Typography, message, Button } from "antd";
 import { useRouter } from "next/router";
-import { useTasks } from "@/utils/index";
-import { addTask, updateTask } from "@/utils/firestore";
+import { useTasks, useProjectTitle } from "@/utils/index";
+import { delProject, getProjects, updateTask } from "@/utils/firestore";
 import { useAuth } from "@/utils/auth";
-import { fetchTasks, taskMovePhase } from "@/redux/tasksSlice";
-import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import { taskMovePhase } from "@/redux/tasksSlice";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  OnDragEndResponder,
+} from "react-beautiful-dnd";
+import { NewTaskButton } from "@/components/NewTaskButton";
+import { EntityId } from "@reduxjs/toolkit";
+import { TaskEditModal } from "@/components/TaskEditModal";
+import { fetchProjects } from "@/redux/projectsSlice";
 
 const { Title } = Typography;
 
@@ -34,32 +28,18 @@ const collectionTitles = [
   "testing",
   "deployed",
 ];
-const taskLabels = [
-  { value: "bug", label: "Bug" },
-  { value: "feature", label: "Feature" },
-  { value: "enhancement", label: "Enhancement" },
-];
-const taskStatus = [
-  { value: "open", label: "Open" },
-  { value: "closed", label: "Closed" },
-];
-const formInitValues: Task = {
-  title: "",
-  label: "feature",
-  status: "open",
-};
 
 export default function Project() {
   const { user } = useAuth();
   const router = useRouter();
   const { projectId } = router.query;
+  const projectTitle = useProjectTitle(projectId as string);
   const { token } = theme.useToken();
   const dispatch = useAppDispatch();
-  const [showModal, setShowModal] = useState(false);
-  const [modalConfirmLoading, setModalConfirmLoading] = useState(false);
-  const [form] = Form.useForm();
-  const { tasksIds, loading, bucketSize } = useTasks(projectId as string);
+  const { tasksIds, bucketSize } = useTasks(projectId as string);
   const [messageApi, contextHolder] = message.useMessage();
+  const [selectTaskId, setSelectTaskId] = useState<EntityId | null>(null);
+  const [delLoading, setDelLoading] = useState<boolean>(false);
 
   // bucket startId and endId = buckets[i], buckets[i+1]
   const buckets = useMemo(() => {
@@ -70,37 +50,43 @@ export default function Project() {
     return v;
   }, [tasksIds, bucketSize]);
 
-  const handleModalOk = () => {
-    form
-      .validateFields()
-      .then((values: Task) => {
-        const newTask: Task = {
-          ...values,
-          due: dayjs(values.due).format(),
-          phase: 0,
-        };
-        setModalConfirmLoading(true);
-        addTask(user?.uid ?? "", projectId as string, newTask)
-          .then(() => {
-            form.resetFields();
-            messageApi.success("The task added!");
-            dispatch(
-              fetchTasks({
-                userId: user?.uid ?? "",
-                projectId: projectId as string,
-              })
-            );
-            setShowModal(false);
-          })
-          .catch(() => {
-            messageApi.error("Failed!");
-          })
-          .finally(() => {
-            setModalConfirmLoading(false);
-          });
+  const handleDragEnd: OnDragEndResponder = (rst) => {
+    // update the tasks locally and send a request to update remotely
+    if (
+      rst.source &&
+      rst.destination &&
+      rst.source.droppableId !== rst.destination.droppableId
+    ) {
+      const srcPhase = parseInt(rst.source.droppableId);
+      const draggedTaskId = tasksIds.slice(
+        buckets[srcPhase],
+        buckets[srcPhase + 1]
+      )[rst.source.index];
+      const toPhase = parseInt(rst.destination.droppableId);
+      dispatch(taskMovePhase({ id: draggedTaskId, to: toPhase }));
+      updateTask(user!.uid, projectId as string, draggedTaskId, {
+        phase: toPhase,
+      }).catch((e) => {
+        messageApi.error("Update Failed!");
+        console.error(e);
+        dispatch(taskMovePhase({ id: draggedTaskId, to: srcPhase }));
+      });
+    }
+  };
+
+  const handleDel = () => {
+    setDelLoading(true);
+    delProject(user?.uid ?? "", projectId as string)
+      .then(() => {
+        dispatch(fetchProjects(user?.uid ?? ""));
+        router.push("/projects?del=1");
       })
-      .catch((info) => {
-        console.log("Validate Failed:", info);
+      .catch((e) => {
+        messageApi.error("Failed!");
+        console.error(e);
+      })
+      .finally(() => {
+        setDelLoading(false);
       });
   };
 
@@ -110,88 +96,22 @@ export default function Project() {
         className="flex items-center"
         style={{ backgroundColor: token.colorBgBase }}
       >
-        {contextHolder}
-        <FloatButton
-          shape="square"
-          type="primary"
-          tooltip="Add Task"
-          icon={<AiOutlinePlus />}
-          onClick={() => setShowModal(true)}
-        />
-        <Modal
-          title="New Task"
-          open={showModal}
-          onOk={handleModalOk}
-          confirmLoading={modalConfirmLoading}
-          onCancel={() => setShowModal(false)}
-        >
-          <Form
-            name="task"
-            layout="vertical"
-            requiredMark="optional"
-            form={form}
-            initialValues={formInitValues}
-          >
-            <Form.Item
-              label="Title"
-              name="title"
-              rules={[{ min: 1, required: true }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item label="Description" name="description">
-              <Input.TextArea />
-            </Form.Item>
-            <Form.Item label="Label" name="label" required>
-              <Select options={taskLabels} />
-            </Form.Item>
-            <Form.Item label="Status" name="status" required>
-              <Select options={taskStatus} />
-            </Form.Item>
-            <Form.Item label="Priority" name="priority">
-              <Rate />
-            </Form.Item>
-            <Form.Item label="Due Date" name="due">
-              <DatePicker
-                format="YYYY-MM-DD HH:mm:ss"
-                showTime={{ defaultValue: dayjs("00:00:01", "HH:mm:ss") }}
-              />
-            </Form.Item>
-            {/* TODO - timeline created updated closed */}
-          </Form>
-        </Modal>
-        <Title level={3}>header</Title>
+        <div className="flex w-full items-center justify-between">
+          <Title level={3}>{projectTitle}</Title>
+          <Button danger loading={delLoading} onClick={handleDel}>
+            Delete Project
+          </Button>
+        </div>
       </Layout.Header>
       <Layout.Content
         className="flex space-x-4 overflow-x-auto p-8"
         style={{ backgroundColor: token.colorBgBase }}
       >
-        <DragDropContext
-          onDragEnd={(result) => {
-            if (
-              result.source &&
-              result.destination &&
-              result.source.droppableId !== result.destination.droppableId
-            ) {
-              const srcPhase = parseInt(result.source.droppableId);
-              const draggedTaskId = tasksIds.slice(
-                buckets[srcPhase],
-                buckets[srcPhase + 1]
-              )[result.source.index];
-              const toPhase = parseInt(result.destination.droppableId);
-              dispatch(taskMovePhase({ id: draggedTaskId, to: toPhase }));
-              updateTask(user!.uid, projectId as string, draggedTaskId, {
-                phase: toPhase,
-              }).catch(() => {
-                messageApi.error("Update Failed!");
-                dispatch(taskMovePhase({ id: draggedTaskId, to: srcPhase }));
-              });
-            }
-          }}
-        >
+        {contextHolder}
+        <DragDropContext onDragEnd={handleDragEnd}>
           {collectionTitles.map((title, idx) => (
             <Droppable droppableId={idx.toString()} key={`droppable-${title}`}>
-              {(provided, snapshot) => (
+              {(provided) => (
                 <ItemCollection
                   ref={provided.innerRef}
                   key={title}
@@ -206,10 +126,11 @@ export default function Project() {
                         draggableId={id.toString()}
                         index={idx}
                       >
-                        {(provided, snapshot) => (
+                        {(provided) => (
                           <Item
                             key={id}
                             id={id}
+                            onClick={() => setSelectTaskId(id)}
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
@@ -224,9 +145,10 @@ export default function Project() {
           ))}
         </DragDropContext>
       </Layout.Content>
-      <Layout.Footer
-        style={{ backgroundColor: token.colorBgBase }}
-      ></Layout.Footer>
+      <Layout.Footer style={{ backgroundColor: token.colorBgBase }}>
+        <NewTaskButton />
+        <TaskEditModal taskId={selectTaskId} setTaskId={setSelectTaskId} />
+      </Layout.Footer>
     </>
   );
 }

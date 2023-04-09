@@ -24,7 +24,7 @@ const taskCmpFn = (a: Task, b: Task) => {
   else if (a.phase! > b.phase!) return 1;
   else {
     // same phase
-    if (a.priority && b.priority) return a.priority - b.priority;
+    if (a.priority && b.priority) return b.priority - a.priority;
     else if (a.priority) return -1;
     else if (b.priority) return 1;
     else return 0;

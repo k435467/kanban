@@ -9,6 +9,12 @@ import {
   tasksSelectors,
 } from "@/redux/tasksSlice";
 
+export const useProjectTitle = (projectId: string) => {
+  const { projects } = useAppSelector(selectProjects);
+  const project = projects.find((v) => v.id === projectId);
+  return project?.title ?? "";
+};
+
 export const useProjects = () => {
   const dispatch = useAppDispatch();
   const { user } = useAuth();

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Button,
   theme,
@@ -9,20 +9,28 @@ import {
   Form,
   message,
 } from "antd";
-import { ProjectsLayout } from "@/components/ProjectsLayout";
 import { addProject } from "@/utils/firestore";
 import { useAuth } from "@/utils/auth";
 import { useAppDispatch } from "@/redux/store";
 import { fetchProjects } from "@/redux/projectsSlice";
+import { useRouter } from "next/router";
 
 const { Title, Text } = Typography;
 
 export default function Projects() {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { token } = theme.useToken();
   const [form] = Form.useForm();
   const { user } = useAuth();
   const [messageApi, contextHolder] = message.useMessage();
+
+  useEffect(() => {
+    if (router.query.del) {
+      messageApi.success("The task deleted!");
+      router.push("/projects");
+    }
+  }, [router.query]);
 
   const handleCreateProject = (v: { title: string }) => {
     if (user?.uid) {

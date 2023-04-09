@@ -68,7 +68,9 @@ export const ProjectsLayout: React.FC<{ children?: React.ReactNode }> = ({
       <Layout.Sider theme="light" collapsible className="border-r">
         <Menu selectable={false} mode="inline" items={settingItems} />
         {loading ? (
-          <Spin />
+          <div className="mt-20 flex justify-center">
+            <Spin />
+          </div>
         ) : (
           <Menu
             selectable={false}

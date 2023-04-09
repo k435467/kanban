@@ -22,13 +22,16 @@ export interface Project {
   title: string;
 }
 
+export type TaskLabel = "bug" | "feature" | "enhancement";
+
 export interface Task {
   id?: string;
   title: string;
   description?: string;
-  label: string;
+  label: TaskLabel;
   status: string;
   priority?: number;
   due?: string;
   phase?: number;
+  createDate?: string;
 }
