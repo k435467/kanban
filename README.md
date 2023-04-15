@@ -1,6 +1,5 @@
 <p align="center">
-  <img src="screenshots/screenshot.png
-  " width="300">
+  <img src="screenshots/screenshot.png" width="300">
 </p>
 
 ## Features
