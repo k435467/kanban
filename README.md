@@ -2,6 +2,8 @@
   <img src="screenshots/screenshot.png" width="300">
 </p>
 
+A kanban website built with NextJS + Ant Design, a tool for visualizing and controlling the project development process for software development engineers. After logging in with a Google account verified by Firebase, users can create and edit multiple projects. Within each project, users can create and edit multiple tasks, set details, priorities, deadlines, etc., and use drag and drop to set the current development stage. You can choose light or dark themes according to your needs.
+
 ## Features
 
 - Drag and drop
